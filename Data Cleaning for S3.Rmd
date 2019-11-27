@@ -1,0 +1,213 @@
+---
+title: "Data Cleaning for Subject 3 in Second Round Data Collection"
+author: "Junqi Zhao"
+date: "May 10, 2019"
+output: html_document
+---
+
+# preping the functions
+```{r}
+#define the downsampling function
+downsample=function(df,fre){
+  rndid <- with(df, ave(elp, elpf, FUN=function(x) {sample.int(length(x))}))
+return(df[rndid<=fre,])
+}
+
+
+#define cleaning the low frequency data points
+del_low_fre=function(x,c){
+if (length(c)==0){
+  print("No need for deleting")
+} else{
+  for (i in 1:length(c)){
+  x=subset(x,elpf!=c[i])
+  }
+  
+}
+return(x)
+}
+
+
+#check the lowfrequency data points
+checklowfre=function(df,threshold){
+fre_table=as.data.frame(table(df$elpf))
+lowfre=fre_table$Var1[fre_table$Freq < threshold]
+lowfre=as.character(lowfre)
+lowfre=as.numeric(lowfre)#return the stting time of the second with low sensor frequency
+return (lowfre)
+}
+
+#find subset of certain lables
+findlabel=function(df,lab){
+df_sub=subset(df,label==lab)
+return(df_sub$elpf)
+}
+
+#giving labels to combined dataset from manual label
+labelling=function(x,y){
+j=1
+for (i in 1:nrow(x)){
+
+  if (x$elpf[i]==y[j,1]){
+    x$label[i]=y[j,2]
+    }else{
+      j=j+1
+      x$label[i]=y[j,2]
+      }
+}
+return(x)
+}
+
+```
+#load data
+```{r}
+#load data
+setwd("/S3")
+ar_ac=read.csv(file = "Arm_Accelerometer.csv",header = T)
+ar_gy=read.csv(file = "Arm_Gyroscope.csv",header = T)
+ca_ac=read.csv(file = "Calf_Accelerometer.csv",header = T)
+ca_gy=read.csv(file = "Calf_Gyroscope.csv",header = T)
+ch_ac=read.csv(file = "Chest_Accelerometer.csv",header = T)
+ch_gy=read.csv(file = "Chest_Gyroscope.csv",header = T)
+he_ac=read.csv(file = "Head_Accelerometer.csv",header = T)
+he_gy=read.csv(file = "Head_Gyroscope.csv",header = T)
+th_ac=read.csv(file = "Thigh_Accelerometer.csv",header = T)
+th_gy=read.csv(file = "Thigh_Gyroscope.csv",header = T)
+#select the data sebset for aligning (the selected video time frame is 10:17:25-10:37:59)
+ar_ac=subset(ar_ac,ar_ac$elapsed..s.>=0.781&ar_ac$elapsed..s.<=1234.747)
+ar_ac$elp=ar_ac$elapsed..s.-0.781
+ar_ac$elpf=floor(ar_ac$elp)
+
+ar_gy=subset(ar_gy,ar_gy$elapsed..s.>=0.780&ar_gy$elapsed..s.<=1234.718)
+ar_gy$elp=ar_gy$elapsed..s.-0.780
+ar_gy$elpf=floor(ar_gy$elp)
+
+ca_ac=subset(ca_ac,ca_ac$elapsed..s.>=1.081&ca_ac$elapsed..s.<=1234.988)
+ca_ac$elp=ca_ac$elapsed..s.-1.081
+ca_ac$elpf=floor(ca_ac$elp)
+
+ca_gy=subset(ca_gy,ca_gy$elapsed..s.>=1.081&ca_gy$elapsed..s.<=1235.048)
+ca_gy$elp=ca_gy$elapsed..s.-1.081
+ca_gy$elpf=floor(ca_gy$elp)
+
+ch_ac=subset(ch_ac,ch_ac$elapsed..s.>=0.420&ch_ac$elapsed..s.<=1234.358)
+ch_ac$elp=ch_ac$elapsed..s.-0.420
+ch_ac$elpf=floor(ch_ac$elp)
+
+ch_gy=subset(ch_gy,ch_gy$elapsed..s.>=0.480&ch_gy$elapsed..s.<=1234.418)
+ch_gy$elp=ch_gy$elapsed..s.-0.480
+ch_gy$elpf=floor(ch_gy$elp)
+
+he_ac=subset(he_ac,he_ac$elapsed..s.>=0.120&he_ac$elapsed..s.<=1234.087)
+he_ac$elp=he_ac$elapsed..s.-0.120
+he_ac$elpf=floor(he_ac$elp)
+he_gy=subset(he_gy,he_gy$elapsed..s.>=0.180&he_gy$elapsed..s.<=1234.087)
+he_gy$elp=he_gy$elapsed..s.-0.180
+he_gy$elpf=floor(he_gy$elp)
+
+th_ac=subset(th_ac,th_ac$elapsed..s.>=0.780&th_ac$elapsed..s.<=1234.718)
+th_ac$elp=th_ac$elapsed..s.-0.780
+th_ac$elpf=floor(th_ac$elp)
+th_gy=subset(th_gy,th_gy$elapsed..s.>=0.780&th_gy$elapsed..s.<=1234.746)
+th_gy$elp=th_gy$elapsed..s.-0.780
+th_gy$elpf=floor(th_gy$elp)
+```
+
+# check low frequency sensor time frame
+```{r}
+#find all the low frequency output
+fre_threshold=40
+del_elpf=unique(c(checklowfre(ar_ac,fre_threshold),checklowfre(ar_gy,fre_threshold),checklowfre(ca_ac,fre_threshold),checklowfre(ca_gy,fre_threshold),checklowfre(ch_ac,fre_threshold),checklowfre(ch_gy,fre_threshold),checklowfre(he_ac,fre_threshold),checklowfre(he_gy,fre_threshold),checklowfre(th_ac,fre_threshold),checklowfre(th_gy,fre_threshold),del_elpf=checklowfre(th_gy,fre_threshold)))
+del_elpf
+```
+# delete the low-frequency data points
+```{r}
+ar_ac=del_low_fre(ar_ac,del_elpf)
+ar_gy=del_low_fre(ar_gy,del_elpf)
+ca_ac=del_low_fre(ca_ac,del_elpf)
+ca_gy=del_low_fre(ca_gy,del_elpf)
+ch_ac=del_low_fre(ch_ac,del_elpf)
+ch_gy=del_low_fre(ch_gy,del_elpf)
+he_ac=del_low_fre(he_ac,del_elpf)
+he_gy=del_low_fre(he_gy,del_elpf)
+th_ac=del_low_fre(th_ac,del_elpf)
+th_gy=del_low_fre(th_gy,del_elpf)
+```
+# get the common time frame
+```{r}
+common=Reduce(intersect, list(unique(ar_ac$elpf),unique(ar_gy$elpf),unique(ca_ac$elpf),unique(ca_gy$elpf),unique(ch_ac$elpf),unique(ch_gy$elpf),unique(he_ac$elpf),unique(he_gy$elpf),unique(th_ac$elpf),unique(th_gy$elpf)))
+d1=setdiff(unique(ca_ac$elpf),common)
+d2=setdiff(unique(ca_gy$elpf),common)
+d3=setdiff(unique(ch_ac$elpf),common)
+d4=setdiff(unique(ch_gy$elpf),common)
+d5=setdiff(unique(he_ac$elpf),common)
+d6=setdiff(unique(he_gy$elpf),common)
+d7=setdiff(unique(th_ac$elpf),common)
+d8=setdiff(unique(th_gy$elpf),common)
+d9=setdiff(unique(ar_ac$elpf),common)
+d10=setdiff(unique(ar_gy$elpf),common)
+
+del_elpf_miss=unique(c(d1,d2,d3,d4,d5,d6,d7,d8,d9,d10))
+#delete the missed points
+ar_ac=del_low_fre(ar_ac,del_elpf_miss)
+ar_gy=del_low_fre(ar_gy,del_elpf_miss)
+ca_ac=del_low_fre(ca_ac,del_elpf_miss)
+ca_gy=del_low_fre(ca_gy,del_elpf_miss)
+ch_ac=del_low_fre(ch_ac,del_elpf_miss)
+ch_gy=del_low_fre(ch_gy,del_elpf_miss)
+he_ac=del_low_fre(he_ac,del_elpf_miss)
+he_gy=del_low_fre(he_gy,del_elpf_miss)
+th_ac=del_low_fre(th_ac,del_elpf_miss)
+th_gy=del_low_fre(th_gy,del_elpf_miss)
+```
+
+# downsampling
+```{r}
+ar_ac=downsample(ar_ac,fre_threshold)
+ar_gy=downsample(ar_gy,fre_threshold)
+ca_ac=downsample(ca_ac,fre_threshold)
+ca_gy=downsample(ca_gy,fre_threshold)
+ch_ac=downsample(ch_ac,fre_threshold)
+ch_gy=downsample(ch_gy,fre_threshold)
+he_ac=downsample(he_ac,fre_threshold)
+he_gy=downsample(he_gy,fre_threshold)
+th_ac=downsample(th_ac,fre_threshold)
+th_gy=downsample(th_gy,fre_threshold)
+```
+
+# combine the dataset for analysis
+```{r}
+#combining the data with ar_acc as time reference
+Subject3=data.frame(timestamp=ar_ac$timestamp...0400.,elapsed=ar_ac$elapsed..s.,elpf=ar_ac$elpf,ar_acc_x=ar_ac$x.axis..g.,ar_acc_y=ar_ac$y.axis..g.,ar_acc_z=ar_ac$z.axis..g.,ar_gy_x=ar_gy$x.axis..deg.s.,ar_gy_y=ar_gy$y.axis..deg.s.,ar_gy_z=ar_gy$z.axis..deg.s.,ca_acc_x=ca_ac$x.axis..g.,ca_acc_y=ca_ac$y.axis..g.,ca_acc_z=ca_ac$z.axis..g.,ca_gy_x=ca_gy$x.axis..deg.s.,ca_gy_y=ca_gy$y.axis..deg.s.,ca_gy_z=ca_gy$z.axis..deg.s.,ch_acc_x=ch_ac$x.axis..g.,ch_acc_y=ch_ac$y.axis..g.,ch_acc_z=ch_ac$z.axis..g.,ch_gy_x=ch_gy$x.axis..deg.s.,ch_gy_y=ch_gy$y.axis..deg.s.,ch_gy_z=ch_gy$z.axis..deg.s.,he_acc_x=he_ac$x.axis..g.,he_acc_y=he_ac$y.axis..g.,he_acc_z=he_ac$z.axis..g.,he_gy_x=he_gy$x.axis..deg.s.,he_gy_y=he_gy$y.axis..deg.s.,he_gy_z=he_gy$z.axis..deg.s.,th_acc_x=th_ac$x.axis..g.,th_acc_y=th_ac$y.axis..g.,th_acc_z=th_ac$z.axis..g.,th_gy_x=th_gy$x.axis..deg.s.,th_gy_y=th_gy$y.axis..deg.s.,th_gy_z=th_gy$z.axis..deg.s.)
+write.csv(Subject3,"Subject3 (Ready for Labelling).csv")
+```
+
+# labelling
+```{r}
+#get the ground truth labels
+label=read.csv("S3_Labelling Ground Truth.csv",header = T)
+label_char=as.numeric(label$label)
+label=data.frame(elpf=label$elp,label=label_char)
+#delete the label with low frequency
+label=del_low_fre(label,del_elpf)
+#delete the label of missed points
+label=del_low_fre(label,del_elpf_miss)
+#labeling the sensor output
+Subject3=labelling(Subject3,label)
+#delete the NG data points without video reference from labels
+Subject3=del_low_fre(Subject3,findlabel(label,2))
+```
+# export data for analysis
+```{r}
+write.csv(Subject3,"S3.csv")
+S3_X=Subject3[,4:33]
+S3_Y=Subject3[,34]
+write.csv(S3_X,"S3_X.csv")
+write.csv(S3_Y,"S3_Y.csv")
+```
+
+
+
+
+
+
