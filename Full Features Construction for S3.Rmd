@@ -1,0 +1,1157 @@
+---
+title: "Full Feature Construction"
+author: "Junqi Zhao"
+date: "May 19, 2019"
+output: html_document
+---
+
+#Subject 3
+## Data Preparation
+```{r}
+setwd("/S3")
+#load data
+imudata=read.csv("S3_X_ML.csv",header = T) #import labelled data
+f=40
+```
+## Feature Construction
+```{r}
+#package installation
+library("seewave")
+library("base")
+library("trend")
+library("moments")
+library("BBmisc")
+#Feature Construction
+##Time related features
+#adjust to the adjwin
+n=max(imudata$adjwin)
+### X-axis
+#sensor-th
+#Minimum
+min_th_acc_x=aggregate(th_acc_x~ adjwin, imudata, function(x) c(min = min(x)))$th_acc_x
+min_th_gy_x=aggregate(th_gy_x~ adjwin, imudata, function(x) c(min = min(x)))$th_gy_x
+#Maximum
+max_th_acc_x=aggregate(th_acc_x~ adjwin, imudata, function(x) c(max = max(x)))$th_acc_x
+max_th_gy_x=aggregate(th_gy_x~ adjwin, imudata, function(x) c(max = max(x)))$th_gy_x
+#Mean Value
+mean_th_acc_x=aggregate(th_acc_x~ adjwin, imudata, function(x) c(mean = mean(x)))$th_acc_x
+mean_th_gy_x=aggregate(th_gy_x~ adjwin, imudata, function(x) c(mean = mean(x)))$th_gy_x
+#Variance
+var_th_acc_x=aggregate(th_acc_x~ adjwin, imudata, function(x) c(sd = sd(x)))$th_acc_x
+var_th_gy_x=aggregate(th_gy_x~ adjwin, imudata, function(x) c(sd = sd(x)))$th_gy_x
+#Average absolute deviation
+aad_th_acc_x=aggregate(th_acc_x~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$th_acc_x
+aad_th_gy_x=aggregate(th_gy_x~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$th_gy_x
+#RMS
+rms_th_acc_x=aggregate(th_acc_x~ adjwin, imudata, function(x) c(rms = rms(x)))$th_acc_x
+rms_th_gy_x=aggregate(th_gy_x~ adjwin, imudata, function(x) c(rms = rms(x)))$th_gy_x
+#Zero-crossing rate
+zcr_th_acc_x=aggregate(th_acc_x~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$th_acc_x
+zcr_th_gy_x=aggregate(th_gy_x~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$th_gy_x
+#Sign
+sign_th_acc_x=aggregate(th_acc_x~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$th_acc_x
+sign_th_gy_x=aggregate(th_gy_x~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$th_gy_x
+#Slope (Sen's Slope)
+slope_th_acc_x=aggregate(th_acc_x~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$th_acc_x
+slope_th_gy_x=aggregate(th_gy_x~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$th_gy_x
+
+#sensor-cr
+#Minimum
+min_cr_acc_x=aggregate(cr_ac_x~ adjwin, imudata, function(x) c(min = min(x)))$cr_ac_x
+min_cr_gy_x=aggregate(cr_gy_x~ adjwin, imudata, function(x) c(min = min(x)))$cr_gy_x
+#Maximum
+max_cr_acc_x=aggregate(cr_ac_x~ adjwin, imudata, function(x) c(max = max(x)))$cr_ac_x
+max_cr_gy_x=aggregate(cr_gy_x~ adjwin, imudata, function(x) c(max = max(x)))$cr_gy_x
+#Mean Value
+mean_cr_acc_x=aggregate(cr_ac_x~ adjwin, imudata, function(x) c(mean = mean(x)))$cr_ac_x
+mean_cr_gy_x=aggregate(cr_gy_x~ adjwin, imudata, function(x) c(mean = mean(x)))$cr_gy_x
+#Variance
+var_cr_acc_x=aggregate(cr_ac_x~ adjwin, imudata, function(x) c(sd = sd(x)))$cr_ac_x
+var_cr_gy_x=aggregate(cr_gy_x~ adjwin, imudata, function(x) c(sd = sd(x)))$cr_gy_x
+#Average absolute deviation
+aad_cr_acc_x=aggregate(cr_ac_x~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$cr_ac_x
+aad_cr_gy_x=aggregate(cr_gy_x~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$cr_gy_x
+#RMS
+rms_cr_acc_x=aggregate(cr_ac_x~ adjwin, imudata, function(x) c(rms = rms(x)))$cr_ac_x
+rms_cr_gy_x=aggregate(cr_gy_x~ adjwin, imudata, function(x) c(rms = rms(x)))$cr_gy_x
+#Zero-crossing rate
+zcr_cr_acc_x=aggregate(cr_ac_x~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$cr_ac_x
+zcr_cr_gy_x=aggregate(cr_gy_x~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$cr_gy_x
+#Sign
+sign_cr_acc_x=aggregate(cr_ac_x~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$cr_ac_x
+sign_cr_gy_x=aggregate(cr_gy_x~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$cr_gy_x
+#Slope (Sen's Slope)
+slope_cr_acc_x=aggregate(cr_ac_x~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$cr_ac_x
+slope_cr_gy_x=aggregate(cr_gy_x~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$cr_gy_x
+
+#sensor-ch
+#Minimum
+min_ch_acc_x=aggregate(ch_ac_x~ adjwin, imudata, function(x) c(min = min(x)))$ch_ac_x
+min_ch_gy_x=aggregate(ch_gy_x~ adjwin, imudata, function(x) c(min = min(x)))$ch_gy_x
+#Maximum
+max_ch_acc_x=aggregate(ch_ac_x~ adjwin, imudata, function(x) c(max = max(x)))$ch_ac_x
+max_ch_gy_x=aggregate(ch_gy_x~ adjwin, imudata, function(x) c(max = max(x)))$ch_gy_x
+#Mean Value
+mean_ch_acc_x=aggregate(ch_ac_x~ adjwin, imudata, function(x) c(mean = mean(x)))$ch_ac_x
+mean_ch_gy_x=aggregate(ch_gy_x~ adjwin, imudata, function(x) c(mean = mean(x)))$ch_gy_x
+#Variance
+var_ch_acc_x=aggregate(ch_ac_x~ adjwin, imudata, function(x) c(sd = sd(x)))$ch_ac_x
+var_ch_gy_x=aggregate(ch_gy_x~ adjwin, imudata, function(x) c(sd = sd(x)))$ch_gy_x
+#Average absolute deviation
+aad_ch_acc_x=aggregate(ch_ac_x~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ch_ac_x
+aad_ch_gy_x=aggregate(ch_gy_x~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ch_gy_x
+#RMS
+rms_ch_acc_x=aggregate(ch_ac_x~ adjwin, imudata, function(x) c(rms = rms(x)))$ch_ac_x
+rms_ch_gy_x=aggregate(ch_gy_x~ adjwin, imudata, function(x) c(rms = rms(x)))$ch_gy_x
+#Zero-chossing rate
+zcr_ch_acc_x=aggregate(ch_ac_x~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ch_ac_x
+zcr_ch_gy_x=aggregate(ch_gy_x~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ch_gy_x
+#Sign
+sign_ch_acc_x=aggregate(ch_ac_x~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ch_ac_x
+sign_ch_gy_x=aggregate(ch_gy_x~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ch_gy_x
+#Slope (Sen's Slope)
+slope_ch_acc_x=aggregate(ch_ac_x~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ch_ac_x
+slope_ch_gy_x=aggregate(ch_gy_x~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ch_gy_x
+
+#sensor-ar
+#Minimum
+min_ar_ac_x=aggregate(ar_ac_x~ adjwin, imudata, function(x) c(min = min(x)))$ar_ac_x
+min_ar_gy_x=aggregate(ar_gy_x~ adjwin, imudata, function(x) c(min = min(x)))$ar_gy_x
+#Maximum
+max_ar_ac_x=aggregate(ar_ac_x~ adjwin, imudata, function(x) c(max = max(x)))$ar_ac_x
+max_ar_gy_x=aggregate(ar_gy_x~ adjwin, imudata, function(x) c(max = max(x)))$ar_gy_x
+#Mean Value
+mean_ar_ac_x=aggregate(ar_ac_x~ adjwin, imudata, function(x) c(mean = mean(x)))$ar_ac_x
+mean_ar_gy_x=aggregate(ar_gy_x~ adjwin, imudata, function(x) c(mean = mean(x)))$ar_gy_x
+#Variance
+var_ar_ac_x=aggregate(ar_ac_x~ adjwin, imudata, function(x) c(sd = sd(x)))$ar_ac_x
+var_ar_gy_x=aggregate(ar_gy_x~ adjwin, imudata, function(x) c(sd = sd(x)))$ar_gy_x
+#Average absolute deviation
+aad_ar_ac_x=aggregate(ar_ac_x~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ar_ac_x
+aad_ar_gy_x=aggregate(ar_gy_x~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ar_gy_x
+#RMS
+rms_ar_ac_x=aggregate(ar_ac_x~ adjwin, imudata, function(x) c(rms = rms(x)))$ar_ac_x
+rms_ar_gy_x=aggregate(ar_gy_x~ adjwin, imudata, function(x) c(rms = rms(x)))$ar_gy_x
+#Zero-crossing rate
+zcr_ar_ac_x=aggregate(ar_ac_x~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ar_ac_x
+zcr_ar_gy_x=aggregate(ar_gy_x~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ar_gy_x
+#Sign
+sign_ar_ac_x=aggregate(ar_ac_x~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ar_ac_x
+sign_ar_gy_x=aggregate(ar_gy_x~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ar_gy_x
+#Slope (Sen's Slope)
+slope_ar_ac_x=aggregate(ar_ac_x~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ar_ac_x
+slope_ar_gy_x=aggregate(ar_gy_x~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ar_gy_x
+
+#sensor-ba
+#Minimum
+min_ba_acc_x=aggregate(ba_ac_x~ adjwin, imudata, function(x) c(min = min(x)))$ba_ac_x
+min_ba_gy_x=aggregate(ba_gy_x~ adjwin, imudata, function(x) c(min = min(x)))$ba_gy_x
+#Maximum
+max_ba_acc_x=aggregate(ba_ac_x~ adjwin, imudata, function(x) c(max = max(x)))$ba_ac_x
+max_ba_gy_x=aggregate(ba_gy_x~ adjwin, imudata, function(x) c(max = max(x)))$ba_gy_x
+#Mean Value
+mean_ba_acc_x=aggregate(ba_ac_x~ adjwin, imudata, function(x) c(mean = mean(x)))$ba_ac_x
+mean_ba_gy_x=aggregate(ba_gy_x~ adjwin, imudata, function(x) c(mean = mean(x)))$ba_gy_x
+#Variance
+var_ba_acc_x=aggregate(ba_ac_x~ adjwin, imudata, function(x) c(sd = sd(x)))$ba_ac_x
+var_ba_gy_x=aggregate(ba_gy_x~ adjwin, imudata, function(x) c(sd = sd(x)))$ba_gy_x
+#Average absolute deviation
+aad_ba_acc_x=aggregate(ba_ac_x~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ba_ac_x
+aad_ba_gy_x=aggregate(ba_gy_x~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ba_gy_x
+#RMS
+rms_ba_acc_x=aggregate(ba_ac_x~ adjwin, imudata, function(x) c(rms = rms(x)))$ba_ac_x
+rms_ba_gy_x=aggregate(ba_gy_x~ adjwin, imudata, function(x) c(rms = rms(x)))$ba_gy_x
+#Zero-crossing rate
+zcr_ba_acc_x=aggregate(ba_ac_x~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ba_ac_x
+zcr_ba_gy_x=aggregate(ba_gy_x~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ba_gy_x
+#Sign
+sign_ba_acc_x=aggregate(ba_ac_x~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ba_ac_x
+sign_ba_gy_x=aggregate(ba_gy_x~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ba_gy_x
+#Slope (Sen's Slope)
+slope_ba_acc_x=aggregate(ba_ac_x~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ba_ac_x
+slope_ba_gy_x=aggregate(ba_gy_x~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ba_gy_x
+
+### Y-axis
+#sensor-th
+#Minimum
+min_th_acc_y=aggregate(th_acc_y~ adjwin, imudata, function(x) c(min = min(x)))$th_acc_y
+min_th_gy_y=aggregate(th_gy_y~ adjwin, imudata, function(x) c(min = min(x)))$th_gy_y
+#Maximum
+max_th_acc_y=aggregate(th_acc_y~ adjwin, imudata, function(x) c(max = max(x)))$th_acc_y
+max_th_gy_y=aggregate(th_gy_y~ adjwin, imudata, function(x) c(max = max(x)))$th_gy_y
+#Mean Value
+mean_th_acc_y=aggregate(th_acc_y~ adjwin, imudata, function(x) c(mean = mean(x)))$th_acc_y
+mean_th_gy_y=aggregate(th_gy_y~ adjwin, imudata, function(x) c(mean = mean(x)))$th_gy_y
+#Variance
+var_th_acc_y=aggregate(th_acc_y~ adjwin, imudata, function(x) c(sd = sd(x)))$th_acc_y
+var_th_gy_y=aggregate(th_gy_y~ adjwin, imudata, function(x) c(sd = sd(x)))$th_gy_y
+#Average absolute deviation
+aad_th_acc_y=aggregate(th_acc_y~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$th_acc_y
+aad_th_gy_y=aggregate(th_gy_y~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$th_gy_y
+#RMS
+rms_th_acc_y=aggregate(th_acc_y~ adjwin, imudata, function(x) c(rms = rms(x)))$th_acc_y
+rms_th_gy_y=aggregate(th_gy_y~ adjwin, imudata, function(x) c(rms = rms(x)))$th_gy_y
+#Zero-crossing rate
+zcr_th_acc_y=aggregate(th_acc_y~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$th_acc_y
+zcr_th_gy_y=aggregate(th_gy_y~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$th_gy_y
+#Sign
+sign_th_acc_y=aggregate(th_acc_y~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$th_acc_y
+sign_th_gy_y=aggregate(th_gy_y~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$th_gy_y
+#Slope (Sen's Slope)
+slope_th_acc_y=aggregate(th_acc_y~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$th_acc_y
+slope_th_gy_y=aggregate(th_gy_y~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$th_gy_y
+
+#sensor-cr
+#Minimum
+min_cr_acc_y=aggregate(cr_ac_y~ adjwin, imudata, function(x) c(min = min(x)))$cr_ac_y
+min_cr_gy_y=aggregate(cr_gy_y~ adjwin, imudata, function(x) c(min = min(x)))$cr_gy_y
+#Maximum
+max_cr_acc_y=aggregate(cr_ac_y~ adjwin, imudata, function(x) c(max = max(x)))$cr_ac_y
+max_cr_gy_y=aggregate(cr_gy_y~ adjwin, imudata, function(x) c(max = max(x)))$cr_gy_y
+#Mean Value
+mean_cr_acc_y=aggregate(cr_ac_y~ adjwin, imudata, function(x) c(mean = mean(x)))$cr_ac_y
+mean_cr_gy_y=aggregate(cr_gy_y~ adjwin, imudata, function(x) c(mean = mean(x)))$cr_gy_y
+#Variance
+var_cr_acc_y=aggregate(cr_ac_y~ adjwin, imudata, function(x) c(sd = sd(x)))$cr_ac_y
+var_cr_gy_y=aggregate(cr_gy_y~ adjwin, imudata, function(x) c(sd = sd(x)))$cr_gy_y
+#Average absolute deviation
+aad_cr_acc_y=aggregate(cr_ac_y~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$cr_ac_y
+aad_cr_gy_y=aggregate(cr_gy_y~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$cr_gy_y
+#RMS
+rms_cr_acc_y=aggregate(cr_ac_y~ adjwin, imudata, function(x) c(rms = rms(x)))$cr_ac_y
+rms_cr_gy_y=aggregate(cr_gy_y~ adjwin, imudata, function(x) c(rms = rms(x)))$cr_gy_y
+#Zero-crossing rate
+zcr_cr_acc_y=aggregate(cr_ac_y~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$cr_ac_y
+zcr_cr_gy_y=aggregate(cr_gy_y~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$cr_gy_y
+#Sign
+sign_cr_acc_y=aggregate(cr_ac_y~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$cr_ac_y
+sign_cr_gy_y=aggregate(cr_gy_y~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$cr_gy_y
+#Slope (Sen's Slope)
+slope_cr_acc_y=aggregate(cr_ac_y~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$cr_ac_y
+slope_cr_gy_y=aggregate(cr_gy_y~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$cr_gy_y
+
+#sensor-ch
+#Minimum
+min_ch_acc_y=aggregate(ch_ac_y~ adjwin, imudata, function(x) c(min = min(x)))$ch_ac_y
+min_ch_gy_y=aggregate(ch_gy_y~ adjwin, imudata, function(x) c(min = min(x)))$ch_gy_y
+#Maximum
+max_ch_acc_y=aggregate(ch_ac_y~ adjwin, imudata, function(x) c(max = max(x)))$ch_ac_y
+max_ch_gy_y=aggregate(ch_gy_y~ adjwin, imudata, function(x) c(max = max(x)))$ch_gy_y
+#Mean Value
+mean_ch_acc_y=aggregate(ch_ac_y~ adjwin, imudata, function(x) c(mean = mean(x)))$ch_ac_y
+mean_ch_gy_y=aggregate(ch_gy_y~ adjwin, imudata, function(x) c(mean = mean(x)))$ch_gy_y
+#Variance
+var_ch_acc_y=aggregate(ch_ac_y~ adjwin, imudata, function(x) c(sd = sd(x)))$ch_ac_y
+var_ch_gy_y=aggregate(ch_gy_y~ adjwin, imudata, function(x) c(sd = sd(x)))$ch_gy_y
+#Average absolute deviation
+aad_ch_acc_y=aggregate(ch_ac_y~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ch_ac_y
+aad_ch_gy_y=aggregate(ch_gy_y~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ch_gy_y
+#RMS
+rms_ch_acc_y=aggregate(ch_ac_y~ adjwin, imudata, function(x) c(rms = rms(x)))$ch_ac_y
+rms_ch_gy_y=aggregate(ch_gy_y~ adjwin, imudata, function(x) c(rms = rms(x)))$ch_gy_y
+#Zero-chossing rate
+zcr_ch_acc_y=aggregate(ch_ac_y~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ch_ac_y
+zcr_ch_gy_y=aggregate(ch_gy_y~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ch_gy_y
+#Sign
+sign_ch_acc_y=aggregate(ch_ac_y~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ch_ac_y
+sign_ch_gy_y=aggregate(ch_gy_y~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ch_gy_y
+#Slope (Sen's Slope)
+slope_ch_acc_y=aggregate(ch_ac_y~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ch_ac_y
+slope_ch_gy_y=aggregate(ch_gy_y~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ch_gy_y
+
+#sensor-ar
+#Minimum
+min_ar_ac_y=aggregate(ar_ac_y~ adjwin, imudata, function(x) c(min = min(x)))$ar_ac_y
+min_ar_gy_y=aggregate(ar_gy_y~ adjwin, imudata, function(x) c(min = min(x)))$ar_gy_y
+#Maximum
+max_ar_ac_y=aggregate(ar_ac_y~ adjwin, imudata, function(x) c(max = max(x)))$ar_ac_y
+max_ar_gy_y=aggregate(ar_gy_y~ adjwin, imudata, function(x) c(max = max(x)))$ar_gy_y
+#Mean Value
+mean_ar_ac_y=aggregate(ar_ac_y~ adjwin, imudata, function(x) c(mean = mean(x)))$ar_ac_y
+mean_ar_gy_y=aggregate(ar_gy_y~ adjwin, imudata, function(x) c(mean = mean(x)))$ar_gy_y
+#Variance
+var_ar_ac_y=aggregate(ar_ac_y~ adjwin, imudata, function(x) c(sd = sd(x)))$ar_ac_y
+var_ar_gy_y=aggregate(ar_gy_y~ adjwin, imudata, function(x) c(sd = sd(x)))$ar_gy_y
+#Average absolute deviation
+aad_ar_ac_y=aggregate(ar_ac_y~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ar_ac_y
+aad_ar_gy_y=aggregate(ar_gy_y~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ar_gy_y
+#RMS
+rms_ar_ac_y=aggregate(ar_ac_y~ adjwin, imudata, function(x) c(rms = rms(x)))$ar_ac_y
+rms_ar_gy_y=aggregate(ar_gy_y~ adjwin, imudata, function(x) c(rms = rms(x)))$ar_gy_y
+#Zero-crossing rate
+zcr_ar_ac_y=aggregate(ar_ac_y~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ar_ac_y
+zcr_ar_gy_y=aggregate(ar_gy_y~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ar_gy_y
+#Sign
+sign_ar_ac_y=aggregate(ar_ac_y~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ar_ac_y
+sign_ar_gy_y=aggregate(ar_gy_y~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ar_gy_y
+#Slope (Sen's Slope)
+slope_ar_ac_y=aggregate(ar_ac_y~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ar_ac_y
+slope_ar_gy_y=aggregate(ar_gy_y~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ar_gy_y
+
+#sensor-ba
+#Minimum
+min_ba_acc_y=aggregate(ba_ac_y~ adjwin, imudata, function(x) c(min = min(x)))$ba_ac_y
+min_ba_gy_y=aggregate(ba_gy_y~ adjwin, imudata, function(x) c(min = min(x)))$ba_gy_y
+#Maximum
+max_ba_acc_y=aggregate(ba_ac_y~ adjwin, imudata, function(x) c(max = max(x)))$ba_ac_y
+max_ba_gy_y=aggregate(ba_gy_y~ adjwin, imudata, function(x) c(max = max(x)))$ba_gy_y
+#Mean Value
+mean_ba_acc_y=aggregate(ba_ac_y~ adjwin, imudata, function(x) c(mean = mean(x)))$ba_ac_y
+mean_ba_gy_y=aggregate(ba_gy_y~ adjwin, imudata, function(x) c(mean = mean(x)))$ba_gy_y
+#Variance
+var_ba_acc_y=aggregate(ba_ac_y~ adjwin, imudata, function(x) c(sd = sd(x)))$ba_ac_y
+var_ba_gy_y=aggregate(ba_gy_y~ adjwin, imudata, function(x) c(sd = sd(x)))$ba_gy_y
+#Average absolute deviation
+aad_ba_acc_y=aggregate(ba_ac_y~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ba_ac_y
+aad_ba_gy_y=aggregate(ba_gy_y~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ba_gy_y
+#RMS
+rms_ba_acc_y=aggregate(ba_ac_y~ adjwin, imudata, function(x) c(rms = rms(x)))$ba_ac_y
+rms_ba_gy_y=aggregate(ba_gy_y~ adjwin, imudata, function(x) c(rms = rms(x)))$ba_gy_y
+#Zero-crossing rate
+zcr_ba_acc_y=aggregate(ba_ac_y~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ba_ac_y
+zcr_ba_gy_y=aggregate(ba_gy_y~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ba_gy_y
+#Sign
+sign_ba_acc_y=aggregate(ba_ac_y~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ba_ac_y
+sign_ba_gy_y=aggregate(ba_gy_y~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ba_gy_y
+#Slope (Sen's Slope)
+slope_ba_acc_y=aggregate(ba_ac_y~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ba_ac_y
+slope_ba_gy_y=aggregate(ba_gy_y~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ba_gy_y
+
+### Z-axis
+#sensor-th
+#Minimum
+min_th_acc_z=aggregate(th_acc_z~ adjwin, imudata, function(x) c(min = min(x)))$th_acc_z
+min_th_gy_z=aggregate(th_gy_z~ adjwin, imudata, function(x) c(min = min(x)))$th_gy_z
+#Maximum
+max_th_acc_z=aggregate(th_acc_z~ adjwin, imudata, function(x) c(max = max(x)))$th_acc_z
+max_th_gy_z=aggregate(th_gy_z~ adjwin, imudata, function(x) c(max = max(x)))$th_gy_z
+#Mean Value
+mean_th_acc_z=aggregate(th_acc_z~ adjwin, imudata, function(x) c(mean = mean(x)))$th_acc_z
+mean_th_gy_z=aggregate(th_gy_z~ adjwin, imudata, function(x) c(mean = mean(x)))$th_gy_z
+#Variance
+var_th_acc_z=aggregate(th_acc_z~ adjwin, imudata, function(x) c(sd = sd(x)))$th_acc_z
+var_th_gy_z=aggregate(th_gy_z~ adjwin, imudata, function(x) c(sd = sd(x)))$th_gy_z
+#Average absolute deviation
+aad_th_acc_z=aggregate(th_acc_z~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$th_acc_z
+aad_th_gy_z=aggregate(th_gy_z~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$th_gy_z
+#RMS
+rms_th_acc_z=aggregate(th_acc_z~ adjwin, imudata, function(x) c(rms = rms(x)))$th_acc_z
+rms_th_gy_z=aggregate(th_gy_z~ adjwin, imudata, function(x) c(rms = rms(x)))$th_gy_z
+#Zero-crossing rate
+zcr_th_acc_z=aggregate(th_acc_z~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$th_acc_z
+zcr_th_gy_z=aggregate(th_gy_z~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$th_gy_z
+#Sign
+sign_th_acc_z=aggregate(th_acc_z~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$th_acc_z
+sign_th_gy_z=aggregate(th_gy_z~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$th_gy_z
+#Slope (Sen's Slope)
+slope_th_acc_z=aggregate(th_acc_z~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$th_acc_z
+slope_th_gy_z=aggregate(th_gy_z~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$th_gy_z
+
+
+#sensor-cr
+#Minimum
+min_cr_acc_z=aggregate(cr_ac_z~ adjwin, imudata, function(x) c(min = min(x)))$cr_ac_z
+min_cr_gy_z=aggregate(cr_gy_z~ adjwin, imudata, function(x) c(min = min(x)))$cr_gy_z
+#Maximum
+max_cr_acc_z=aggregate(cr_ac_z~ adjwin, imudata, function(x) c(max = max(x)))$cr_ac_z
+max_cr_gy_z=aggregate(cr_gy_z~ adjwin, imudata, function(x) c(max = max(x)))$cr_gy_z
+#Mean Value
+mean_cr_acc_z=aggregate(cr_ac_z~ adjwin, imudata, function(x) c(mean = mean(x)))$cr_ac_z
+mean_cr_gy_z=aggregate(cr_gy_z~ adjwin, imudata, function(x) c(mean = mean(x)))$cr_gy_z
+#Variance
+var_cr_acc_z=aggregate(cr_ac_z~ adjwin, imudata, function(x) c(sd = sd(x)))$cr_ac_z
+var_cr_gy_z=aggregate(cr_gy_z~ adjwin, imudata, function(x) c(sd = sd(x)))$cr_gy_z
+#Average absolute deviation
+aad_cr_acc_z=aggregate(cr_ac_z~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$cr_ac_z
+aad_cr_gy_z=aggregate(cr_gy_z~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$cr_gy_z
+#RMS
+rms_cr_acc_z=aggregate(cr_ac_z~ adjwin, imudata, function(x) c(rms = rms(x)))$cr_ac_z
+rms_cr_gy_z=aggregate(cr_gy_z~ adjwin, imudata, function(x) c(rms = rms(x)))$cr_gy_z
+#Zero-crossing rate
+zcr_cr_acc_z=aggregate(cr_ac_z~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$cr_ac_z
+zcr_cr_gy_z=aggregate(cr_gy_z~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$cr_gy_z
+#Sign
+sign_cr_acc_z=aggregate(cr_ac_z~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$cr_ac_z
+sign_cr_gy_z=aggregate(cr_gy_z~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$cr_gy_z
+#Slope (Sen's Slope)
+slope_cr_acc_z=aggregate(cr_ac_z~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$cr_ac_z
+slope_cr_gy_z=aggregate(cr_gy_z~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$cr_gy_z
+
+
+#sensor-ch
+#Minimum
+min_ch_acc_z=aggregate(ch_ac_z~ adjwin, imudata, function(x) c(min = min(x)))$ch_ac_z
+min_ch_gy_z=aggregate(ch_gy_z~ adjwin, imudata, function(x) c(min = min(x)))$ch_gy_z
+#Maximum
+max_ch_acc_z=aggregate(ch_ac_z~ adjwin, imudata, function(x) c(max = max(x)))$ch_ac_z
+max_ch_gy_z=aggregate(ch_gy_z~ adjwin, imudata, function(x) c(max = max(x)))$ch_gy_z
+#Mean Value
+mean_ch_acc_z=aggregate(ch_ac_z~ adjwin, imudata, function(x) c(mean = mean(x)))$ch_ac_z
+mean_ch_gy_z=aggregate(ch_gy_z~ adjwin, imudata, function(x) c(mean = mean(x)))$ch_gy_z
+#Variance
+var_ch_acc_z=aggregate(ch_ac_z~ adjwin, imudata, function(x) c(sd = sd(x)))$ch_ac_z
+var_ch_gy_z=aggregate(ch_gy_z~ adjwin, imudata, function(x) c(sd = sd(x)))$ch_gy_z
+#Average absolute deviation
+aad_ch_acc_z=aggregate(ch_ac_z~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ch_ac_z
+aad_ch_gy_z=aggregate(ch_gy_z~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ch_gy_z
+#RMS
+rms_ch_acc_z=aggregate(ch_ac_z~ adjwin, imudata, function(x) c(rms = rms(x)))$ch_ac_z
+rms_ch_gy_z=aggregate(ch_gy_z~ adjwin, imudata, function(x) c(rms = rms(x)))$ch_gy_z
+#Zero-chossing rate
+zcr_ch_acc_z=aggregate(ch_ac_z~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ch_ac_z
+zcr_ch_gy_z=aggregate(ch_gy_z~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ch_gy_z
+#Sign
+sign_ch_acc_z=aggregate(ch_ac_z~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ch_ac_z
+sign_ch_gy_z=aggregate(ch_gy_z~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ch_gy_z
+#Slope (Sen's Slope)
+slope_ch_acc_z=aggregate(ch_ac_z~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ch_ac_z
+slope_ch_gy_z=aggregate(ch_gy_z~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ch_gy_z
+
+#sensor-ar
+#Minimum
+min_ar_ac_z=aggregate(ar_ac_z~ adjwin, imudata, function(x) c(min = min(x)))$ar_ac_z
+min_ar_gy_z=aggregate(ar_gy_z~ adjwin, imudata, function(x) c(min = min(x)))$ar_gy_z
+#Maximum
+max_ar_ac_z=aggregate(ar_ac_z~ adjwin, imudata, function(x) c(max = max(x)))$ar_ac_z
+max_ar_gy_z=aggregate(ar_gy_z~ adjwin, imudata, function(x) c(max = max(x)))$ar_gy_z
+#Mean Value
+mean_ar_ac_z=aggregate(ar_ac_z~ adjwin, imudata, function(x) c(mean = mean(x)))$ar_ac_z
+mean_ar_gy_z=aggregate(ar_gy_z~ adjwin, imudata, function(x) c(mean = mean(x)))$ar_gy_z
+#Variance
+var_ar_ac_z=aggregate(ar_ac_z~ adjwin, imudata, function(x) c(sd = sd(x)))$ar_ac_z
+var_ar_gy_z=aggregate(ar_gy_z~ adjwin, imudata, function(x) c(sd = sd(x)))$ar_gy_z
+#Average absolute deviation
+aad_ar_ac_z=aggregate(ar_ac_z~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ar_ac_z
+aad_ar_gy_z=aggregate(ar_gy_z~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ar_gy_z
+#RMS
+rms_ar_ac_z=aggregate(ar_ac_z~ adjwin, imudata, function(x) c(rms = rms(x)))$ar_ac_z
+rms_ar_gy_z=aggregate(ar_gy_z~ adjwin, imudata, function(x) c(rms = rms(x)))$ar_gy_z
+#Zero-crossing rate
+zcr_ar_ac_z=aggregate(ar_ac_z~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ar_ac_z
+zcr_ar_gy_z=aggregate(ar_gy_z~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ar_gy_z
+#Sign
+sign_ar_ac_z=aggregate(ar_ac_z~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ar_ac_z
+sign_ar_gy_z=aggregate(ar_gy_z~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ar_gy_z
+#Slope (Sen's Slope)
+slope_ar_ac_z=aggregate(ar_ac_z~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ar_ac_z
+slope_ar_gy_z=aggregate(ar_gy_z~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ar_gy_z
+
+
+#sensor-ba
+#Minimum
+min_ba_acc_z=aggregate(ba_ac_z~ adjwin, imudata, function(x) c(min = min(x)))$ba_ac_z
+min_ba_gy_z=aggregate(ba_gy_z~ adjwin, imudata, function(x) c(min = min(x)))$ba_gy_z
+#Maximum
+max_ba_acc_z=aggregate(ba_ac_z~ adjwin, imudata, function(x) c(max = max(x)))$ba_ac_z
+max_ba_gy_z=aggregate(ba_gy_z~ adjwin, imudata, function(x) c(max = max(x)))$ba_gy_z
+#Mean Value
+mean_ba_acc_z=aggregate(ba_ac_z~ adjwin, imudata, function(x) c(mean = mean(x)))$ba_ac_z
+mean_ba_gy_z=aggregate(ba_gy_z~ adjwin, imudata, function(x) c(mean = mean(x)))$ba_gy_z
+#Variance
+var_ba_acc_z=aggregate(ba_ac_z~ adjwin, imudata, function(x) c(sd = sd(x)))$ba_ac_z
+var_ba_gy_z=aggregate(ba_gy_z~ adjwin, imudata, function(x) c(sd = sd(x)))$ba_gy_z
+#Average absolute deviation
+aad_ba_acc_z=aggregate(ba_ac_z~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ba_ac_z
+aad_ba_gy_z=aggregate(ba_gy_z~ adjwin, imudata, function(x) c(abd = mad(x,center = mean(x))))$ba_gy_z
+#RMS
+rms_ba_acc_z=aggregate(ba_ac_z~ adjwin, imudata, function(x) c(rms = rms(x)))$ba_ac_z
+rms_ba_gy_z=aggregate(ba_gy_z~ adjwin, imudata, function(x) c(rms = rms(x)))$ba_gy_z
+#Zero-crossing rate
+zcr_ba_acc_z=aggregate(ba_ac_z~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ba_ac_z
+zcr_ba_gy_z=aggregate(ba_gy_z~ adjwin, imudata, function(x) c(zcr = zcr(x,f,plot=F,wl=NULL)))$ba_gy_z
+#Sign
+sign_ba_acc_z=aggregate(ba_ac_z~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ba_ac_z
+sign_ba_gy_z=aggregate(ba_gy_z~ adjwin, imudata, function(x) c(signs = sign(mean(x))))$ba_gy_z
+#Slope (Sen's Slope)
+slope_ba_acc_z=aggregate(ba_ac_z~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ba_ac_z
+slope_ba_gy_z=aggregate(ba_gy_z~ adjwin, imudata, function(x) c(slope = sens.slope(x)$estimates))$ba_gy_z
+
+##Frequency related features
+###X-axis
+
+##sensor-th
+##Entropy
+entr_th_acc_x=c(1:n) 
+entr_th_gy_x=c(1:n)
+##Energy
+eng_th_acc_x=c(1:n)
+eng_th_gy_x=c(1:n)
+##Spectral Centroid
+cen_th_acc_x=c(1:n)
+cen_th_gy_x=c(1:n)
+##Frequency Range Power
+frp_th_acc_x=c(1:n)
+frp_th_gy_x=c(1:n)
+##Skewness of frequency
+skew_th_acc_x=c(1:n)
+skew_th_gy_x=c(1:n)
+##kurtosis of frequency
+kur_th_acc_x=c(1:n)
+kur_th_gy_x=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_th_acc_x=spec(subst$th_acc_x,f=f,plot=F)
+  spec_th_gy_x=spec(subst$th_gy_x,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_th_acc_x[i]=sh(spec_th_acc_x,alpha = "shannon")
+  entr_th_gy_x[i]=sh(spec_th_gy_x,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_th_acc_x[i]=sum(spec_th_acc_x[,2]^2)
+  eng_th_gy_x[i]=sum(spec_th_gy_x[,2]^2)
+  #Spectral Centroid
+  cen_th_acc_x[i]=specprop(spec_th_acc_x,f=f,plot=F)$cent
+  cen_th_gy_x[i]=specprop(spec_th_gy_x,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_th_acc_x[i]=sum(abs(spec_th_acc_x[,2]))
+  frp_th_gy_x[i]=sum(abs(spec_th_gy_x[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_th_acc_x[i]=skewness(spec_th_acc_x[,2])
+  skew_th_gy_x[i]=skewness(spec_th_gy_x[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_th_acc_x[i]=kurtosis(spec_th_acc_x[,2])
+  kur_th_gy_x[i]=kurtosis(spec_th_gy_x[,2])
+}
+
+##sensor-cr
+##Entropy
+entr_cr_acc_x=c(1:n) 
+entr_cr_gy_x=c(1:n)
+##Energy
+eng_cr_acc_x=c(1:n)
+eng_cr_gy_x=c(1:n)
+##Spectral Centroid
+cen_cr_acc_x=c(1:n)
+cen_cr_gy_x=c(1:n)
+##Frequency Range Power
+frp_cr_acc_x=c(1:n)
+frp_cr_gy_x=c(1:n)
+##Skewness of frequency
+skew_cr_acc_x=c(1:n)
+skew_cr_gy_x=c(1:n)
+##kurtosis of frequency
+kur_cr_acc_x=c(1:n)
+kur_cr_gy_x=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_cr_acc_x=spec(subst$cr_ac_x,f=f,plot=F)
+  spec_cr_gy_x=spec(subst$cr_gy_x,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_cr_acc_x[i]=sh(spec_cr_acc_x,alpha = "shannon")
+  entr_cr_gy_x[i]=sh(spec_cr_gy_x,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_cr_acc_x[i]=sum(spec_cr_acc_x[,2]^2)
+  eng_cr_gy_x[i]=sum(spec_cr_gy_x[,2]^2)
+  #Spectral Centroid
+  cen_cr_acc_x[i]=specprop(spec_cr_acc_x,f=f,plot=F)$cent
+  cen_cr_gy_x[i]=specprop(spec_cr_gy_x,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_cr_acc_x[i]=sum(abs(spec_cr_acc_x[,2]))
+  frp_cr_gy_x[i]=sum(abs(spec_cr_gy_x[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_cr_acc_x[i]=skewness(spec_cr_acc_x[,2])
+  skew_cr_gy_x[i]=skewness(spec_cr_gy_x[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_cr_acc_x[i]=kurtosis(spec_cr_acc_x[,2])
+  kur_cr_gy_x[i]=kurtosis(spec_cr_gy_x[,2])
+}
+
+##sensor-ch
+##Entropy
+entr_ch_acc_x=c(1:n) 
+entr_ch_gy_x=c(1:n)
+##Energy
+eng_ch_acc_x=c(1:n)
+eng_ch_gy_x=c(1:n)
+##Spectral Centroid
+cen_ch_acc_x=c(1:n)
+cen_ch_gy_x=c(1:n)
+##Frequency Range Power
+frp_ch_acc_x=c(1:n)
+frp_ch_gy_x=c(1:n)
+##Skewness of frequency
+skew_ch_acc_x=c(1:n)
+skew_ch_gy_x=c(1:n)
+##kurtosis of frequency
+kur_ch_acc_x=c(1:n)
+kur_ch_gy_x=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_ch_acc_x=spec(subst$ch_ac_x,f=f,plot=F)
+  spec_ch_gy_x=spec(subst$ch_gy_x,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_ch_acc_x[i]=sh(spec_ch_acc_x,alpha = "shannon")
+  entr_ch_gy_x[i]=sh(spec_ch_gy_x,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_ch_acc_x[i]=sum(spec_ch_acc_x[,2]^2)
+  eng_ch_gy_x[i]=sum(spec_ch_gy_x[,2]^2)
+  #Spectral Centroid
+  cen_ch_acc_x[i]=specprop(spec_ch_acc_x,f=f,plot=F)$cent
+  cen_ch_gy_x[i]=specprop(spec_ch_gy_x,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_ch_acc_x[i]=sum(abs(spec_ch_acc_x[,2]))
+  frp_ch_gy_x[i]=sum(abs(spec_ch_gy_x[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_ch_acc_x[i]=skewness(spec_ch_acc_x[,2])
+  skew_ch_gy_x[i]=skewness(spec_ch_gy_x[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_ch_acc_x[i]=kurtosis(spec_ch_acc_x[,2])
+  kur_ch_gy_x[i]=kurtosis(spec_ch_gy_x[,2])
+}
+
+##sensor-ar
+##Entropy
+entr_ar_ac_x=c(1:n) 
+entr_ar_gy_x=c(1:n)
+##Energy
+eng_ar_ac_x=c(1:n)
+eng_ar_gy_x=c(1:n)
+##Spectral Centroid
+cen_ar_ac_x=c(1:n)
+cen_ar_gy_x=c(1:n)
+##Frequency Range Power
+frp_ar_ac_x=c(1:n)
+frp_ar_gy_x=c(1:n)
+##Skewness of frequency
+skew_ar_ac_x=c(1:n)
+skew_ar_gy_x=c(1:n)
+##kurtosis of frequency
+kur_ar_ac_x=c(1:n)
+kur_ar_gy_x=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_ar_ac_x=spec(subst$ar_ac_x,f=f,plot=F)
+  spec_ar_gy_x=spec(subst$ar_gy_x,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_ar_ac_x[i]=sh(spec_ar_ac_x,alpha = "shannon")
+  entr_ar_gy_x[i]=sh(spec_ar_gy_x,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_ar_ac_x[i]=sum(spec_ar_ac_x[,2]^2)
+  eng_ar_gy_x[i]=sum(spec_ar_gy_x[,2]^2)
+  #Spectral Centroid
+  cen_ar_ac_x[i]=specprop(spec_ar_ac_x,f=f,plot=F)$cent
+  cen_ar_gy_x[i]=specprop(spec_ar_gy_x,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_ar_ac_x[i]=sum(abs(spec_ar_ac_x[,2]))
+  frp_ar_gy_x[i]=sum(abs(spec_ar_gy_x[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_ar_ac_x[i]=skewness(spec_ar_ac_x[,2])
+  skew_ar_gy_x[i]=skewness(spec_ar_gy_x[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_ar_ac_x[i]=kurtosis(spec_ar_ac_x[,2])
+  kur_ar_gy_x[i]=kurtosis(spec_ar_gy_x[,2])
+}
+
+##sensor-ba
+##Entropy
+entr_ba_acc_x=c(1:n) 
+entr_ba_gy_x=c(1:n)
+##Energy
+eng_ba_acc_x=c(1:n)
+eng_ba_gy_x=c(1:n)
+##Spectral Centroid
+cen_ba_acc_x=c(1:n)
+cen_ba_gy_x=c(1:n)
+##Frequency Range Power
+frp_ba_acc_x=c(1:n)
+frp_ba_gy_x=c(1:n)
+##Skewness of frequency
+skew_ba_acc_x=c(1:n)
+skew_ba_gy_x=c(1:n)
+##kurtosis of frequency
+kur_ba_acc_x=c(1:n)
+kur_ba_gy_x=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_ba_acc_x=spec(subst$ba_ac_x,f=f,plot=F)
+  spec_ba_gy_x=spec(subst$ba_gy_x,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_ba_acc_x[i]=sh(spec_ba_acc_x,alpha = "shannon")
+  entr_ba_gy_x[i]=sh(spec_ba_gy_x,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_ba_acc_x[i]=sum(spec_ba_acc_x[,2]^2)
+  eng_ba_gy_x[i]=sum(spec_ba_gy_x[,2]^2)
+  #Spectral Centroid
+  cen_ba_acc_x[i]=specprop(spec_ba_acc_x,f=f,plot=F)$cent
+  cen_ba_gy_x[i]=specprop(spec_ba_gy_x,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_ba_acc_x[i]=sum(abs(spec_ba_acc_x[,2]))
+  frp_ba_gy_x[i]=sum(abs(spec_ba_gy_x[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_ba_acc_x[i]=skewness(spec_ba_acc_x[,2])
+  skew_ba_gy_x[i]=skewness(spec_ba_gy_x[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_ba_acc_x[i]=kurtosis(spec_ba_acc_x[,2])
+  kur_ba_gy_x[i]=kurtosis(spec_ba_gy_x[,2])
+}
+
+###Y-axis
+
+##sensor-th
+##Entropy
+entr_th_acc_y=c(1:n) 
+entr_th_gy_y=c(1:n)
+##Energy
+eng_th_acc_y=c(1:n)
+eng_th_gy_y=c(1:n)
+##Spectral Centroid
+cen_th_acc_y=c(1:n)
+cen_th_gy_y=c(1:n)
+##Frequency Range Power
+frp_th_acc_y=c(1:n)
+frp_th_gy_y=c(1:n)
+##Skewness of frequency
+skew_th_acc_y=c(1:n)
+skew_th_gy_y=c(1:n)
+##kurtosis of frequency
+kur_th_acc_y=c(1:n)
+kur_th_gy_y=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_th_acc_y=spec(subst$th_acc_y,f=f,plot=F)
+  spec_th_gy_y=spec(subst$th_gy_y,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_th_acc_y[i]=sh(spec_th_acc_y,alpha = "shannon")
+  entr_th_gy_y[i]=sh(spec_th_gy_y,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_th_acc_y[i]=sum(spec_th_acc_y[,2]^2)
+  eng_th_gy_y[i]=sum(spec_th_gy_y[,2]^2)
+  #Spectral Centroid
+  cen_th_acc_y[i]=specprop(spec_th_acc_y,f=f,plot=F)$cent
+  cen_th_gy_y[i]=specprop(spec_th_gy_y,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_th_acc_y[i]=sum(abs(spec_th_acc_y[,2]))
+  frp_th_gy_y[i]=sum(abs(spec_th_gy_y[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_th_acc_y[i]=skewness(spec_th_acc_y[,2])
+  skew_th_gy_y[i]=skewness(spec_th_gy_y[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_th_acc_y[i]=kurtosis(spec_th_acc_y[,2])
+  kur_th_gy_y[i]=kurtosis(spec_th_gy_y[,2])
+}
+
+##sensor-cr
+##Entropy
+entr_cr_acc_y=c(1:n) 
+entr_cr_gy_y=c(1:n)
+##Energy
+eng_cr_acc_y=c(1:n)
+eng_cr_gy_y=c(1:n)
+##Spectral Centroid
+cen_cr_acc_y=c(1:n)
+cen_cr_gy_y=c(1:n)
+##Frequency Range Power
+frp_cr_acc_y=c(1:n)
+frp_cr_gy_y=c(1:n)
+##Skewness of frequency
+skew_cr_acc_y=c(1:n)
+skew_cr_gy_y=c(1:n)
+##kurtosis of frequency
+kur_cr_acc_y=c(1:n)
+kur_cr_gy_y=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_cr_acc_y=spec(subst$cr_ac_y,f=f,plot=F)
+  spec_cr_gy_y=spec(subst$cr_gy_y,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_cr_acc_y[i]=sh(spec_cr_acc_y,alpha = "shannon")
+  entr_cr_gy_y[i]=sh(spec_cr_gy_y,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_cr_acc_y[i]=sum(spec_cr_acc_y[,2]^2)
+  eng_cr_gy_y[i]=sum(spec_cr_gy_y[,2]^2)
+  #Spectral Centroid
+  cen_cr_acc_y[i]=specprop(spec_cr_acc_y,f=f,plot=F)$cent
+  cen_cr_gy_y[i]=specprop(spec_cr_gy_y,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_cr_acc_y[i]=sum(abs(spec_cr_acc_y[,2]))
+  frp_cr_gy_y[i]=sum(abs(spec_cr_gy_y[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_cr_acc_y[i]=skewness(spec_cr_acc_y[,2])
+  skew_cr_gy_y[i]=skewness(spec_cr_gy_y[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_cr_acc_y[i]=kurtosis(spec_cr_acc_y[,2])
+  kur_cr_gy_y[i]=kurtosis(spec_cr_gy_y[,2])
+}
+
+
+##sensor-ch
+##Entropy
+entr_ch_acc_y=c(1:n) 
+entr_ch_gy_y=c(1:n)
+##Energy
+eng_ch_acc_y=c(1:n)
+eng_ch_gy_y=c(1:n)
+##Spectral Centroid
+cen_ch_acc_y=c(1:n)
+cen_ch_gy_y=c(1:n)
+##Frequency Range Power
+frp_ch_acc_y=c(1:n)
+frp_ch_gy_y=c(1:n)
+##Skewness of frequency
+skew_ch_acc_y=c(1:n)
+skew_ch_gy_y=c(1:n)
+##kurtosis of frequency
+kur_ch_acc_y=c(1:n)
+kur_ch_gy_y=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_ch_acc_y=spec(subst$ch_ac_y,f=f,plot=F)
+  spec_ch_gy_y=spec(subst$ch_gy_y,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_ch_acc_y[i]=sh(spec_ch_acc_y,alpha = "shannon")
+  entr_ch_gy_y[i]=sh(spec_ch_gy_y,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_ch_acc_y[i]=sum(spec_ch_acc_y[,2]^2)
+  eng_ch_gy_y[i]=sum(spec_ch_gy_y[,2]^2)
+  #Spectral Centroid
+  cen_ch_acc_y[i]=specprop(spec_ch_acc_y,f=f,plot=F)$cent
+  cen_ch_gy_y[i]=specprop(spec_ch_gy_y,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_ch_acc_y[i]=sum(abs(spec_ch_acc_y[,2]))
+  frp_ch_gy_y[i]=sum(abs(spec_ch_gy_y[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_ch_acc_y[i]=skewness(spec_ch_acc_y[,2])
+  skew_ch_gy_y[i]=skewness(spec_ch_gy_y[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_ch_acc_y[i]=kurtosis(spec_ch_acc_y[,2])
+  kur_ch_gy_y[i]=kurtosis(spec_ch_gy_y[,2])
+}
+
+##sensor-ar
+##Entropy
+entr_ar_ac_y=c(1:n) 
+entr_ar_gy_y=c(1:n)
+##Energy
+eng_ar_ac_y=c(1:n)
+eng_ar_gy_y=c(1:n)
+##Spectral Centroid
+cen_ar_ac_y=c(1:n)
+cen_ar_gy_y=c(1:n)
+##Frequency Range Power
+frp_ar_ac_y=c(1:n)
+frp_ar_gy_y=c(1:n)
+##Skewness of frequency
+skew_ar_ac_y=c(1:n)
+skew_ar_gy_y=c(1:n)
+##kurtosis of frequency
+kur_ar_ac_y=c(1:n)
+kur_ar_gy_y=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_ar_ac_y=spec(subst$ar_ac_y,f=f,plot=F)
+  spec_ar_gy_y=spec(subst$ar_gy_y,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_ar_ac_y[i]=sh(spec_ar_ac_y,alpha = "shannon")
+  entr_ar_gy_y[i]=sh(spec_ar_gy_y,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_ar_ac_y[i]=sum(spec_ar_ac_y[,2]^2)
+  eng_ar_gy_y[i]=sum(spec_ar_gy_y[,2]^2)
+  #Spectral Centroid
+  cen_ar_ac_y[i]=specprop(spec_ar_ac_y,f=f,plot=F)$cent
+  cen_ar_gy_y[i]=specprop(spec_ar_gy_y,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_ar_ac_y[i]=sum(abs(spec_ar_ac_y[,2]))
+  frp_ar_gy_y[i]=sum(abs(spec_ar_gy_y[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_ar_ac_y[i]=skewness(spec_ar_ac_y[,2])
+  skew_ar_gy_y[i]=skewness(spec_ar_gy_y[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_ar_ac_y[i]=kurtosis(spec_ar_ac_y[,2])
+  kur_ar_gy_y[i]=kurtosis(spec_ar_gy_y[,2])
+}
+
+##sensor-ba
+##Entropy
+entr_ba_acc_y=c(1:n) 
+entr_ba_gy_y=c(1:n)
+##Energy
+eng_ba_acc_y=c(1:n)
+eng_ba_gy_y=c(1:n)
+##Spectral Centroid
+cen_ba_acc_y=c(1:n)
+cen_ba_gy_y=c(1:n)
+##Frequency Range Power
+frp_ba_acc_y=c(1:n)
+frp_ba_gy_y=c(1:n)
+##Skewness of frequency
+skew_ba_acc_y=c(1:n)
+skew_ba_gy_y=c(1:n)
+##kurtosis of frequency
+kur_ba_acc_y=c(1:n)
+kur_ba_gy_y=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_ba_acc_y=spec(subst$ba_ac_y,f=f,plot=F)
+  spec_ba_gy_y=spec(subst$ba_gy_y,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_ba_acc_y[i]=sh(spec_ba_acc_y,alpha = "shannon")
+  entr_ba_gy_y[i]=sh(spec_ba_gy_y,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_ba_acc_y[i]=sum(spec_ba_acc_y[,2]^2)
+  eng_ba_gy_y[i]=sum(spec_ba_gy_y[,2]^2)
+  #Spectral Centroid
+  cen_ba_acc_y[i]=specprop(spec_ba_acc_y,f=f,plot=F)$cent
+  cen_ba_gy_y[i]=specprop(spec_ba_gy_y,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_ba_acc_y[i]=sum(abs(spec_ba_acc_y[,2]))
+  frp_ba_gy_y[i]=sum(abs(spec_ba_gy_y[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_ba_acc_y[i]=skewness(spec_ba_acc_y[,2])
+  skew_ba_gy_y[i]=skewness(spec_ba_gy_y[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_ba_acc_y[i]=kurtosis(spec_ba_acc_y[,2])
+  kur_ba_gy_y[i]=kurtosis(spec_ba_gy_y[,2])
+}
+
+###Z-axis
+
+##sensor-th
+##Entropy
+entr_th_acc_z=c(1:n) 
+entr_th_gy_z=c(1:n)
+##Energy
+eng_th_acc_z=c(1:n)
+eng_th_gy_z=c(1:n)
+##Spectral Centroid
+cen_th_acc_z=c(1:n)
+cen_th_gy_z=c(1:n)
+##Frequency Range Power
+frp_th_acc_z=c(1:n)
+frp_th_gy_z=c(1:n)
+##Skewness of frequency
+skew_th_acc_z=c(1:n)
+skew_th_gy_z=c(1:n)
+##kurtosis of frequency
+kur_th_acc_z=c(1:n)
+kur_th_gy_z=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_th_acc_z=spec(subst$th_acc_z,f=f,plot=F)
+  spec_th_gy_z=spec(subst$th_gy_z,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_th_acc_z[i]=sh(spec_th_acc_z,alpha = "shannon")
+  entr_th_gy_z[i]=sh(spec_th_gy_z,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_th_acc_z[i]=sum(spec_th_acc_z[,2]^2)
+  eng_th_gy_z[i]=sum(spec_th_gy_z[,2]^2)
+  #Spectral Centroid
+  cen_th_acc_z[i]=specprop(spec_th_acc_z,f=f,plot=F)$cent
+  cen_th_gy_z[i]=specprop(spec_th_gy_z,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_th_acc_z[i]=sum(abs(spec_th_acc_z[,2]))
+  frp_th_gy_z[i]=sum(abs(spec_th_gy_z[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_th_acc_z[i]=skewness(spec_th_acc_z[,2])
+  skew_th_gy_z[i]=skewness(spec_th_gy_z[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_th_acc_z[i]=kurtosis(spec_th_acc_z[,2])
+  kur_th_gy_z[i]=kurtosis(spec_th_gy_z[,2])
+}
+
+##sensor-cr
+##Entropy
+entr_cr_acc_z=c(1:n) 
+entr_cr_gy_z=c(1:n)
+##Energy
+eng_cr_acc_z=c(1:n)
+eng_cr_gy_z=c(1:n)
+##Spectral Centroid
+cen_cr_acc_z=c(1:n)
+cen_cr_gy_z=c(1:n)
+##Frequency Range Power
+frp_cr_acc_z=c(1:n)
+frp_cr_gy_z=c(1:n)
+##Skewness of frequency
+skew_cr_acc_z=c(1:n)
+skew_cr_gy_z=c(1:n)
+##kurtosis of frequency
+kur_cr_acc_z=c(1:n)
+kur_cr_gy_z=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_cr_acc_z=spec(subst$cr_ac_z,f=f,plot=F)
+  spec_cr_gy_z=spec(subst$cr_gy_z,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_cr_acc_z[i]=sh(spec_cr_acc_z,alpha = "shannon")
+  entr_cr_gy_z[i]=sh(spec_cr_gy_z,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_cr_acc_z[i]=sum(spec_cr_acc_z[,2]^2)
+  eng_cr_gy_z[i]=sum(spec_cr_gy_z[,2]^2)
+  #Spectral Centroid
+  cen_cr_acc_z[i]=specprop(spec_cr_acc_z,f=f,plot=F)$cent
+  cen_cr_gy_z[i]=specprop(spec_cr_gy_z,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_cr_acc_z[i]=sum(abs(spec_cr_acc_z[,2]))
+  frp_cr_gy_z[i]=sum(abs(spec_cr_gy_z[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_cr_acc_z[i]=skewness(spec_cr_acc_z[,2])
+  skew_cr_gy_z[i]=skewness(spec_cr_gy_z[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_cr_acc_z[i]=kurtosis(spec_cr_acc_z[,2])
+  kur_cr_gy_z[i]=kurtosis(spec_cr_gy_z[,2])
+}
+
+##sensor-ch
+##Entropy
+entr_ch_acc_z=c(1:n) 
+entr_ch_gy_z=c(1:n)
+##Energy
+eng_ch_acc_z=c(1:n)
+eng_ch_gy_z=c(1:n)
+##Spectral Centroid
+cen_ch_acc_z=c(1:n)
+cen_ch_gy_z=c(1:n)
+##Frequency Range Power
+frp_ch_acc_z=c(1:n)
+frp_ch_gy_z=c(1:n)
+##Skewness of frequency
+skew_ch_acc_z=c(1:n)
+skew_ch_gy_z=c(1:n)
+##kurtosis of frequency
+kur_ch_acc_z=c(1:n)
+kur_ch_gy_z=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_ch_acc_z=spec(subst$ch_ac_z,f=f,plot=F)
+  spec_ch_gy_z=spec(subst$ch_gy_z,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_ch_acc_z[i]=sh(spec_ch_acc_z,alpha = "shannon")
+  entr_ch_gy_z[i]=sh(spec_ch_gy_z,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_ch_acc_z[i]=sum(spec_ch_acc_z[,2]^2)
+  eng_ch_gy_z[i]=sum(spec_ch_gy_z[,2]^2)
+  #Spectral Centroid
+  cen_ch_acc_z[i]=specprop(spec_ch_acc_z,f=f,plot=F)$cent
+  cen_ch_gy_z[i]=specprop(spec_ch_gy_z,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_ch_acc_z[i]=sum(abs(spec_ch_acc_z[,2]))
+  frp_ch_gy_z[i]=sum(abs(spec_ch_gy_z[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_ch_acc_z[i]=skewness(spec_ch_acc_z[,2])
+  skew_ch_gy_z[i]=skewness(spec_ch_gy_z[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_ch_acc_z[i]=kurtosis(spec_ch_acc_z[,2])
+  kur_ch_gy_z[i]=kurtosis(spec_ch_gy_z[,2])
+}
+
+##sensor-ar
+##Entropy
+entr_ar_ac_z=c(1:n) 
+entr_ar_gy_z=c(1:n)
+##Energy
+eng_ar_ac_z=c(1:n)
+eng_ar_gy_z=c(1:n)
+##Spectral Centroid
+cen_ar_ac_z=c(1:n)
+cen_ar_gy_z=c(1:n)
+##Frequency Range Power
+frp_ar_ac_z=c(1:n)
+frp_ar_gy_z=c(1:n)
+##Skewness of frequency
+skew_ar_ac_z=c(1:n)
+skew_ar_gy_z=c(1:n)
+##kurtosis of frequency
+kur_ar_ac_z=c(1:n)
+kur_ar_gy_z=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_ar_ac_z=spec(subst$ar_ac_z,f=f,plot=F)
+  spec_ar_gy_z=spec(subst$ar_gy_z,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_ar_ac_z[i]=sh(spec_ar_ac_z,alpha = "shannon")
+  entr_ar_gy_z[i]=sh(spec_ar_gy_z,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_ar_ac_z[i]=sum(spec_ar_ac_z[,2]^2)
+  eng_ar_gy_z[i]=sum(spec_ar_gy_z[,2]^2)
+  #Spectral Centroid
+  cen_ar_ac_z[i]=specprop(spec_ar_ac_z,f=f,plot=F)$cent
+  cen_ar_gy_z[i]=specprop(spec_ar_gy_z,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_ar_ac_z[i]=sum(abs(spec_ar_ac_z[,2]))
+  frp_ar_gy_z[i]=sum(abs(spec_ar_gy_z[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_ar_ac_z[i]=skewness(spec_ar_ac_z[,2])
+  skew_ar_gy_z[i]=skewness(spec_ar_gy_z[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_ar_ac_z[i]=kurtosis(spec_ar_ac_z[,2])
+  kur_ar_gy_z[i]=kurtosis(spec_ar_gy_z[,2])
+}
+
+##sensor-ba
+##Entropy
+entr_ba_acc_z=c(1:n) 
+entr_ba_gy_z=c(1:n)
+##Energy
+eng_ba_acc_z=c(1:n)
+eng_ba_gy_z=c(1:n)
+##Spectral Centroid
+cen_ba_acc_z=c(1:n)
+cen_ba_gy_z=c(1:n)
+##Frequency Range Power
+frp_ba_acc_z=c(1:n)
+frp_ba_gy_z=c(1:n)
+##Skewness of frequency
+skew_ba_acc_z=c(1:n)
+skew_ba_gy_z=c(1:n)
+##kurtosis of frequency
+kur_ba_acc_z=c(1:n)
+kur_ba_gy_z=c(1:n)
+for (i in 1:n)
+{
+  #calculate the frequency spectrum in each adjwin
+  subst=subset.data.frame(imudata,imudata$adjwin==i)
+  spec_ba_acc_z=spec(subst$ba_ac_z,f=f,plot=F)
+  spec_ba_gy_z=spec(subst$ba_gy_z,f=f,plot=F)
+  #calculate the frequency entropy in each adjwin
+  entr_ba_acc_z[i]=sh(spec_ba_acc_z,alpha = "shannon")
+  entr_ba_gy_z[i]=sh(spec_ba_gy_z,alpha = "shannon")#for the shannon entropy see documentation
+  #Signal energy in each adjwin
+  eng_ba_acc_z[i]=sum(spec_ba_acc_z[,2]^2)
+  eng_ba_gy_z[i]=sum(spec_ba_gy_z[,2]^2)
+  #Spectral Centroid
+  cen_ba_acc_z[i]=specprop(spec_ba_acc_z,f=f,plot=F)$cent
+  cen_ba_gy_z[i]=specprop(spec_ba_gy_z,f=f,plot=F)$cent
+  #Frequency Range Power: this is similar to the signal frequency power, but just using the absolute value
+  frp_ba_acc_z[i]=sum(abs(spec_ba_acc_z[,2]))
+  frp_ba_gy_z[i]=sum(abs(spec_ba_gy_z[,2]))
+  #Skewness of frequency: Measuring the symetric of frequency distribution
+  skew_ba_acc_z[i]=skewness(spec_ba_acc_z[,2])
+  skew_ba_gy_z[i]=skewness(spec_ba_gy_z[,2])
+  #kurtosis of frequency: Measuring the heavy tail of frequency distribution
+  kur_ba_acc_z[i]=kurtosis(spec_ba_acc_z[,2])
+  kur_ba_gy_z[i]=kurtosis(spec_ba_gy_z[,2])
+}
+
+#Build the read-to-use dataset (full feature original)
+fullfeatures=data.frame(window=c(1:n),min_th_acc_x,min_th_gy_x,max_th_acc_x,max_th_gy_x,mean_th_acc_x,mean_th_gy_x,var_th_acc_x,var_th_gy_x,aad_th_acc_x,aad_th_gy_x,rms_th_acc_x,rms_th_gy_x,slope_th_acc_x,slope_th_gy_x,entr_th_acc_x,entr_th_gy_x,eng_th_acc_x,eng_th_gy_x,cen_th_acc_x,cen_th_gy_x,frp_th_acc_x,frp_th_gy_x,skew_th_acc_x,skew_th_gy_x,kur_th_acc_x,kur_th_gy_x,min_cr_acc_x,min_cr_gy_x,max_cr_acc_x,max_cr_gy_x,mean_cr_acc_x,mean_cr_gy_x,var_cr_acc_x,var_cr_gy_x,aad_cr_acc_x,aad_cr_gy_x,rms_cr_acc_x,rms_cr_gy_x,slope_cr_acc_x,slope_cr_gy_x,entr_cr_acc_x,entr_cr_gy_x,eng_cr_acc_x,eng_cr_gy_x,cen_cr_acc_x,cen_cr_gy_x,frp_cr_acc_x,frp_cr_gy_x,skew_cr_acc_x,skew_cr_gy_x,kur_cr_acc_x,kur_cr_gy_x,min_th_acc_y,min_th_gy_y,max_th_acc_y,max_th_gy_y,mean_th_acc_y,mean_th_gy_y,var_th_acc_y,var_th_gy_y,aad_th_acc_y,aad_th_gy_y,rms_th_acc_y,rms_th_gy_y,slope_th_acc_y,slope_th_gy_y,entr_th_acc_y,entr_th_gy_y,eng_th_acc_y,eng_th_gy_y,cen_th_acc_y,cen_th_gy_y,frp_th_acc_y,frp_th_gy_y,skew_th_acc_y,skew_th_gy_y,kur_th_acc_y,kur_th_gy_y,min_cr_acc_y,min_cr_gy_y,max_cr_acc_y,max_cr_gy_y,mean_cr_acc_y,mean_cr_gy_y,var_cr_acc_y,var_cr_gy_y,aad_cr_acc_y,aad_cr_gy_y,rms_cr_acc_y,rms_cr_gy_y,slope_cr_acc_y,slope_cr_gy_y,entr_cr_acc_y,entr_cr_gy_y,eng_cr_acc_y,eng_cr_gy_y,cen_cr_acc_y,cen_cr_gy_y,frp_cr_acc_y,frp_cr_gy_y,skew_cr_acc_y,skew_cr_gy_y,kur_cr_acc_y,kur_cr_gy_y,min_th_acc_z,min_th_gy_z,max_th_acc_z,max_th_gy_z,mean_th_acc_z,mean_th_gy_z,var_th_acc_z,var_th_gy_z,aad_th_acc_z,aad_th_gy_z,rms_th_acc_z,rms_th_gy_z,slope_th_acc_z,slope_th_gy_z,entr_th_acc_z,entr_th_gy_z,eng_th_acc_z,eng_th_gy_z,cen_th_acc_z,cen_th_gy_z,frp_th_acc_z,frp_th_gy_z,skew_th_acc_z,skew_th_gy_z,kur_th_acc_z,kur_th_gy_z,min_cr_acc_z,min_cr_gy_z,max_cr_acc_z,max_cr_gy_z,mean_cr_acc_z,mean_cr_gy_z,var_cr_acc_z,var_cr_gy_z,aad_cr_acc_z,aad_cr_gy_z,rms_cr_acc_z,rms_cr_gy_z,slope_cr_acc_z,slope_cr_gy_z,entr_cr_acc_z,entr_cr_gy_z,eng_cr_acc_z,eng_cr_gy_z,cen_cr_acc_z,cen_cr_gy_z,frp_cr_acc_z,frp_cr_gy_z,skew_cr_acc_z,skew_cr_gy_z,kur_cr_acc_z,kur_cr_gy_z,min_ch_acc_x,min_ch_gy_x,max_ch_acc_x,max_ch_gy_x,mean_ch_acc_x,mean_ch_gy_x,var_ch_acc_x,var_ch_gy_x,aad_ch_acc_x,aad_ch_gy_x,rms_ch_acc_x,rms_ch_gy_x,slope_ch_acc_x,slope_ch_gy_x,entr_ch_acc_x,entr_ch_gy_x,eng_ch_acc_x,eng_ch_gy_x,cen_ch_acc_x,cen_ch_gy_x,frp_ch_acc_x,frp_ch_gy_x,skew_ch_acc_x,skew_ch_gy_x,kur_ch_acc_x,kur_ch_gy_x,min_ch_acc_y,min_ch_gy_y,max_ch_acc_y,max_ch_gy_y,mean_ch_acc_y,mean_ch_gy_y,var_ch_acc_y,var_ch_gy_y,aad_ch_acc_y,aad_ch_gy_y,rms_ch_acc_y,rms_ch_gy_y,slope_ch_acc_y,slope_ch_gy_y,entr_ch_acc_y,entr_ch_gy_y,eng_ch_acc_y,eng_ch_gy_y,cen_ch_acc_y,cen_ch_gy_y,frp_ch_acc_y,frp_ch_gy_y,skew_ch_acc_y,skew_ch_gy_y,kur_ch_acc_y,kur_ch_gy_y,min_ch_acc_z,min_ch_gy_z,max_ch_acc_z,max_ch_gy_z,mean_ch_acc_z,mean_ch_gy_z,var_ch_acc_z,var_ch_gy_z,aad_ch_acc_z,aad_ch_gy_z,rms_ch_acc_z,rms_ch_gy_z,slope_ch_acc_z,slope_ch_gy_z,entr_ch_acc_z,entr_ch_gy_z,eng_ch_acc_z,eng_ch_gy_z,cen_ch_acc_z,cen_ch_gy_z,frp_ch_acc_z,frp_ch_gy_z,skew_ch_acc_z,skew_ch_gy_z,kur_ch_acc_z,kur_ch_gy_z)
+
+#export the dataset
+write.csv(fullfeatures,"S3_ML.csv")
+```
